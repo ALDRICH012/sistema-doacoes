@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista de Doadores{% endblock %}
+
+{% block content %}
+<!-- Formulário de Busca -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-8">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" name="search" class="form-control" 
+                                   placeholder="Buscar por nome, email ou telefone..."
+                                   value="{{ search_query }}">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Doadores -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-users"></i> Lista de Doadores
+                    <small class="ms-2">(Total: {{ donors.paginator.count }})</small>
+                </h5>
+                <a href="{% url 'doacoes:add_donor' %}" class="btn btn-light btn-sm">
+                    <i class="fas fa-user-plus"></i> Novo Doador
+                </a>
+            </div>
+            <div class="card-body">
+                {% if donors %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>E-mail</th>
+                                <th>Telefone</th>
+                                <th>Total de Doações</th>
+                                <th>Última Doação</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for donor in donors %}
+                            <tr>
+                                <td>{{ donor.name }}</td>
+                                <td>{{ donor.email }}</td>
+                                <td>{{ donor.phone }}</td>
+                                <td>
+                                    {% with total=donor.donation_set.count %}
+                                    <span class="badge bg-primary">{{ total }}</span>
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    {% with last_donation=donor.donation_set.last %}
+                                    {% if last_donation %}
+                                    {{ last_donation.date|date:"d/m/Y" }}
+                                    {% else %}
+                                    <span class="text-muted">Nenhuma doação</span>
+                                    {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'doacoes:add_donation' %}?donor={{ donor.id }}" 
+                                       class="btn btn-sm btn-success">
+                                        <i class="fas fa-hand-holding-heart"></i> Doar
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginação -->
+                {% if donors.paginator.num_pages > 1 %}
+                <nav aria-label="Navegação de páginas" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if donors.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}" 
+                               title="Primeira página">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ donors.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}"
+                               title="Página anterior">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {% for num in donors.paginator.page_range %}
+                            {% if num == donors.number %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                            {% elif num > donors.number|add:'-3' and num < donors.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}">
+                                    {{ num }}
+                                </a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if donors.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ donors.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}"
+                               title="Próxima página">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ donors.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}"
+                               title="Última página">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> 
+                    {% if search_query %}
+                    Nenhum doador encontrado para "{{ search_query }}".
+                    {% else %}
+                    Nenhum doador cadastrado ainda.
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cards de Informações -->
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-users"></i> Total de Doadores
+                </h5>
+                <p class="card-text display-4">{{ donors.paginator.count }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-hand-holding-heart"></i> Total de Doações
+                </h5>
+                <p class="card-text display-4">R$ {{ total_donations|floatformat:2 }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-calendar"></i> Doações Hoje
+                </h5>
+                <p class="card-text display-4">{{ today_donations }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
