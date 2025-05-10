@@ -1,27 +1,26 @@
 from django.db import models
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, MinValueValidator
 
 class Donor(models.Model):
     name = models.CharField(max_length=100, verbose_name='Nome')
-    email = models.EmailField(verbose_name='E-mail')
+    email = models.EmailField(unique=True, verbose_name='E-mail')  # Unique para evitar duplicatas
     phone = models.CharField(
-        max_length=15,
+        max_length=20,
         validators=[
             RegexValidator(
-                regex=r'^\+?1?\d{9,15}$',
-                message='O número de telefone deve estar no formato: +999999999'
+                regex=r'^\+\d{9,15}$',
+                message='Use o formato: +5511999999999'
             )
         ],
         verbose_name='Telefone'
     )
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Data de criação')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='Última atualização')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
 
     class Meta:
-        verbose_name = 'Doador'
         verbose_name_plural = 'Doadores'
         ordering = ['-created_at']
 
@@ -32,23 +31,25 @@ class Donation(models.Model):
         ('cancelled', 'Cancelada')
     ]
 
-    donor = models.ForeignKey(Donor, on_delete=models.CASCADE, verbose_name='Doador')
-    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Valor')
-    date = models.DateField(auto_now_add=True, verbose_name='Data')
-    description = models.TextField(blank=True, verbose_name='Descrição')
+    donor = models.ForeignKey(Donor, on_delete=models.CASCADE)
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0.01)]  # Valor mínimo de 1 centavo
+    )
+    date = models.DateField(auto_now_add=True)
+    description = models.TextField(blank=True)
     status = models.CharField(
         max_length=10,
         choices=STATUS_CHOICES,
-        default='pending',
-        verbose_name='Status'
+        default='pending'
     )
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Data de criação')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='Última atualização')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f'Doação de {self.amount} por {self.donor.name}'
+        return f'R$ {self.amount} - {self.donor.name}'
 
     class Meta:
-        verbose_name = 'Doação'
         verbose_name_plural = 'Doações'
         ordering = ['-date']
