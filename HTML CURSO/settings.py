@@ -1,3 +1,4 @@
+import sys
 import os
 from pathlib import Path
 
@@ -60,16 +61,14 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME', 'nome_do_banco'),
-        'USER': os.environ.get('DB_USER', 'usuario'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'senha'),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
-        'CONN_MAX_AGE': 60,  # Tempo máximo de conexão em segundos
-        'OPTIONS': {
-            'connect_timeout': 10,
-        },
+        'NAME': os.environ.get('DB_NAME'),
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
+        'HOST': os.environ.get('DB_HOST'),
+        'PORT': os.environ.get('DB_PORT'),
     }
+}
+
 }
 
 # Password validation
@@ -115,3 +114,8 @@ MESSAGE_TAGS = {
     messages.WARNING: 'alert-warning',
     messages.ERROR: 'alert-danger',
 }
+if 'test' in sys.argv:
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': ':memory:'
+    }
